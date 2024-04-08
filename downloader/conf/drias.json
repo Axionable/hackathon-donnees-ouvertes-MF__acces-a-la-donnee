@@ -1,0 +1,12 @@
+{
+    "sources" : {
+        "drias" : {
+            "CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63" : {
+                "parametre" : "temperature",
+                "historical_url" : "https://climatedata.umr-cnrm.fr/public/dcsc/projects/DRIAS/DRIAS2020_NEW/CNRM-CERFACS-CNRM-CM5/CNRM-ALADIN63/historical/day/tasAdjust/tasAdjust_France_CNRM-CERFACS-CNRM-CM5_historical_r1i1p1_CNRM-ALADIN63_v2_MF-ADAMONT-SAFRAN-1980-2011_day_19510101-20051231.nc",
+                "rcp45_url" : "https://climatedata.umr-cnrm.fr/public/dcsc/projects/DRIAS/DRIAS2020_NEW/CNRM-CERFACS-CNRM-CM5/CNRM-ALADIN63/rcp45/day/tasAdjust/tasAdjust_France_CNRM-CERFACS-CNRM-CM5_rcp45_r1i1p1_CNRM-ALADIN63_v2_MF-ADAMONT-SAFRAN-1980-2011_day_20060101-21001231.nc",
+                "rcp85_url": "https://climatedata.umr-cnrm.fr/public/dcsc/projects/DRIAS/DRIAS2020_NEW/CNRM-CERFACS-CNRM-CM5/CNRM-ALADIN63/rcp85/day/tasAdjust/tasAdjust_France_CNRM-CERFACS-CNRM-CM5_rcp85_r1i1p1_CNRM-ALADIN63_v2_MF-ADAMONT-SAFRAN-1980-2011_day_20060101-21001231.nc"
+            }   
+        }
+    }
+}
