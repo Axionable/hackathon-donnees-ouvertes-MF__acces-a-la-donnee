@@ -1,8 +1,8 @@
 import json
 import logging
 import os
-import sys
 import pandas as pd
+import sys
 import xarray
 
 
@@ -28,7 +28,7 @@ def convertir_csv_vers_netcdf(csv_nom_fichier, metadonnees_dict):
     return xr
 
 
-def is_source_key_available_TMP1(source_key: str) -> bool:
+def is_source_key_available(source_key: str) -> bool:
     """
     Check if "source_key" is available in the file: downloader/conf/sim.json
     :param source_key: Key corresponding to the desired data source
@@ -41,22 +41,6 @@ def is_source_key_available_TMP1(source_key: str) -> bool:
         with open("downloader/conf/conf.json", "r") as file:
             content = json.load(file)
             return source_key in content["sources"].keys()
-
-
-def is_source_key_available_TMP2(source_key: str) -> bool:
-    """
-    Check if "source_key" is available in the file: downloader/conf/drias.json
-    :param source_key: Key corresponding to the desired data source
-    :return: Verification status (true or false)
-    """
-
-    if source_key is None:
-        return False
-    
-    else:
-        with open("acces-a-la-donnee/downloader/conf/drias.json", "r") as file:
-            content = json.load(file)
-            return source_key in content["sources"].keys()
         
 
 def get_data_info(source_key: str) -> dict:
@@ -66,12 +50,9 @@ def get_data_info(source_key: str) -> dict:
     :return: Config element's value
     """
     if source_key is not None:
-        #with open("downloader/conf/conf.json", "r") as file:
-        #    content = json.load(file)
-        #    return content["sources"][source_key]
-        with open("acces-a-la-donnee/downloader/conf/drias.json", "r") as file:
-            content = json.load(file)
-            return content["sources"][source_key]
+        with open("downloader/conf/conf.json", "r") as file:
+           content = json.load(file)
+           return content["sources"][source_key]
 
 
 def get_url(scenario, parametre, modele):

@@ -1,21 +1,9 @@
 import json
-import logging
-import os
-import sys
 import wget
 
 from datetime import date
 from os import path
-
-
-FORMAT = "%(asctime)-15s [%(filename)s:%(lineno)s - %(funcName)2s()] %(message)s"
-log_level = (
-    os.environ.get("LOG_LEVEL") if os.environ.get("LOG_LEVEL") is not None else "INFO"
-)
-logging.basicConfig(
-    stream=sys.stdout, format=FORMAT, level=logging.getLevelName(log_level)
-)
-LOGGER = logging.getLogger(__name__)
+from utils import LOGGER, bar_progress
 
 
 def get_data_info(source_key: str) -> dict:
@@ -27,9 +15,9 @@ def get_data_info(source_key: str) -> dict:
     :return: Les informations de la source de données (nom du fichier, url de téléchargement)
     """
     if source_key is not None:
-        with open("downloader/conf/sim.json", "r") as file:
+        with open("downloader/conf/conf.json", "r") as file:
             content = json.load(file)
-            return content["sources"][source_key]
+            return content["sources"]["sim"][source_key]
  
 
 def get_data_sources_name() -> list[str]:
@@ -39,9 +27,9 @@ def get_data_sources_name() -> list[str]:
 
     :return: Une liste de clé
     """
-    with open("downloader/conf/sim.json", "r") as file:
+    with open("downloader/conf/conf.json", "r") as file:
         content = json.load(file)
-        return list(content["sources"].keys())
+        return list(content["sources"]["sim"].keys())
     
 
 def extract_years_from_data_source_name(data_source_name: str) -> list[int, int]:
@@ -101,10 +89,17 @@ def download_data(start_date: date, end_date: date) -> None:
         
         else:
             LOGGER.info(f"Téléchargement du fichier {filename} en cours ...")
-            wget.download(url=data_source_info["url"], out=f"downloader/data/{filename}")
+            wget.download(
+                url=data_source_info["url"], 
+                out=f"downloader/data/{filename}", 
+                bar=bar_progress
+            )
             print()
             LOGGER.info(f"Téléchargement terminé !")
 
 
 if __name__ == "__main__":
-    download_data(start_date=date(2019, 10, 20), end_date=date(2022, 10, 21))
+    download_data(
+        start_date=date(2019, 10, 20), 
+        end_date=date(2022, 10, 21)
+    )
