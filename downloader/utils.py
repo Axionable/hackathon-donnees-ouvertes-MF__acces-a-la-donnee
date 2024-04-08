@@ -1,7 +1,10 @@
+import pandas as pd
+import xarray
 import json
 import os
 import sys
 import logging
+
 
 FORMAT = "%(asctime)-15s [%(filename)s:%(lineno)s - %(funcName)2s()] %(message)s"
 log_level = os.environ.get("LOG_LEVEL") if os.environ.get(
@@ -10,6 +13,19 @@ logging.basicConfig(
     stream=sys.stdout, format=FORMAT, level=logging.getLevelName(log_level)
 )
 LOGGER = logging.getLogger(__name__)
+
+
+def convertir_csv_vers_netcdf(csv_nom_fichier, metadonnees_dict):
+    df = pd.read_csv(csv_nom_fichier)
+
+    nom_nc = csv_nom_fichier.rsplit( ".", 1 )[ 0 ]
+
+    xr = xarray.Dataset.from_dataframe(df)
+    xr.attrs = metadonnees_dict
+    xr.to_netcdf(f'{nom_nc}.nc')
+
+    print("Fichier NetCDF généré")
+    return xr
 
 
 def is_source_key_available(source_key: str) -> bool:
@@ -39,6 +55,7 @@ def get_data_info(source_key: str) -> dict:
             content = json.load(file)
             return content["sources"][source_key]
 
+
 def get_url(scenario, parametre, modele):
     data = get_data_info("drias")
     if modele in data.keys() and parametre == data[modele]["parametre"]:
@@ -54,6 +71,7 @@ def get_url(scenario, parametre, modele):
     else:
         print("Parametres invalides...")
         return None         
+
 
 def bar_progress(current, total, width=80):
     progress_message = "Downloading: %d%% [%d / %d] bytes" % (
