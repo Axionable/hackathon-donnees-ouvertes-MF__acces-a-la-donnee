@@ -15,16 +15,21 @@ logging.basicConfig(
 LOGGER = logging.getLogger(__name__)
 
 
-def convertir_csv_vers_netcdf(csv_nom_fichier, metadonnees_dict):
-    df = pd.read_csv(csv_nom_fichier)
+def convert_csv_to_netcdf(csv_path: str, metadata: dict) -> xarray:
+    """
+    Convert a CSV file into a NetCDF file
+    :param csv_file_name: Path to CSV file to convert
+    :param metadata: Metadata to export to the NetCDF file
+    :return: xarray generated
+    """
+    df = pd.read_csv(csv_path)
 
-    nom_nc = csv_nom_fichier.rsplit( ".", 1 )[ 0 ]
+    nom_nc = csv_path.rsplit( ".", 1 )[ 0 ]
 
     xr = xarray.Dataset.from_dataframe(df)
-    xr.attrs = metadonnees_dict
+    xr.attrs = metadata
     xr.to_netcdf(f'{nom_nc}.nc')
 
-    print("Fichier NetCDF généré")
     return xr
 
 
@@ -80,3 +85,18 @@ def bar_progress(current, total, width=80):
     )
     sys.stdout.write("\r" + progress_message)
     sys.stdout.flush()
+
+
+def netcdf_filter_columns(netcdf_file: xarray, column_list: list[str]) -> xarray:
+    """
+    Return a NetCDF file with only the requested columns
+    :param netcdf_file: xarray to filter
+    :param column_list: list of the column to keep
+    :return: new xarray with only requested columns
+    """
+    data = xarray.open_dataset(netcdf_file)
+    data_subset = data[column_list]
+    data_subset.to_netcdf(f'{netcdf_file}_final.nc')
+    
+    return data_subset
+
