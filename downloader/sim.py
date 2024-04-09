@@ -105,7 +105,20 @@ def get_data_from_file(filenames: list[str]) -> pd.DataFrame:
     :param filename: _description_
     :return: _description_
     """
-    df = pd.read_csv(filepath_or_buffer=filenames[0], compression="gzip", sep=";")
+    dict_mapping = {
+        "data_mf_sim2_1958_1959": "downloader/data/QUOT_SIM2_1958-1959.csv.gz",
+        "data_mf_sim2_1960_1969": "downloader/data/QUOT_SIM2_1960-1969.csv.gz",
+        "data_mf_sim2_1970_1979": "downloader/data/QUOT_SIM2_1970-1979.csv.gz",
+        "data_mf_sim2_1980_1989": "downloader/data/QUOT_SIM2_1980-1989.csv.gz",
+        "data_mf_sim2_1990_1999": "downloader/data/QUOT_SIM2_1990-1999.csv.gz",
+        "data_mf_sim2_2000_2009": "downloader/data/QUOT_SIM2_2000-2009.csv.gz",
+        "data_mf_sim2_2010_2019": "downloader/data/QUOT_SIM2_2010-2019.csv.gz",
+        "data_mf_sim2_2020_2024": "downloader/data/QUOT_SIM2_2020-2024.csv.gz",
+    }
+
+    df = pd.read_csv(
+        filepath_or_buffer=dict_mapping[filenames[0]], compression="gzip", sep=";"
+    )
 
     if len(filenames) > 0:
         for i in range(1, len(filenames)):
@@ -113,7 +126,9 @@ def get_data_from_file(filenames: list[str]) -> pd.DataFrame:
                 [
                     df,
                     pd.read_csv(
-                        filepath_or_buffer=filenames[i], compression="gzip", sep=";"
+                        filepath_or_buffer=dict_mapping[filenames[i]],
+                        compression="gzip",
+                        sep=";",
                     ),
                 ]
             )
@@ -154,7 +169,7 @@ def convert_df_to_netcdf(df: pd.DataFrame) -> xarray.core.dataset.Dataset:
 
 
 def select_data_for_a_city(
-    xarr: xarray.core.dataset.Dataset, city: str
+    xarr: xarray.core.dataset.Dataset, insee_code: int
 ) -> xarray.core.dataset.Dataset:
     """_summary_
 
@@ -163,40 +178,49 @@ def select_data_for_a_city(
     :return: _description_
     """
     city_mapping = {
-        "montpellier": {"LAMBX": 7240, "LAMBY": 18490},
-        "paris": {"LAMBX": 6040, "LMABY": 24250},
-        "bordeaux": {"LAMBX": 3720, "LAMBY": 19850},
+        34172: {"LAMBX": 7240, "LAMBY": 18490},
+        75056: {"LAMBX": 6040, "LAMBY": 24250},
+        33063: {"LAMBX": 3720, "LAMBY": 19850},
     }
 
     return xarr.sel(
-        LAMBX=city_mapping[city]["LAMBX"], LAMBY=city_mapping[city]["LAMBY"]
+        LAMBX=city_mapping[insee_code]["LAMBX"],
+        LAMBY=city_mapping[insee_code]["LAMBY"],
     )
+
+
+def launch_process(
+    insee_code: int, start_date: date, end_date: date, vars: list[str]
+) -> xarray.core.dataset.Dataset:
+    """_summary_
+
+    :param insee_code: _description_
+    :param start_date: _description_
+    :param end_date: _description_
+    :return: _description_
+    """
+    # We collect required data
+    download_data(start_date=start_date, end_date=end_date)
+
+    # We load data as Pandas DataFrame
+    filenames = get_required_data_source(start_date=start_date, end_date=end_date)
+    df = get_data_from_file(filenames=filenames)
+
+    # We processed the data
+    df = filter_dataframe(df=df, vars=vars, start_date=start_date, end_date=end_date)
+    xarr = convert_df_to_netcdf(df=df)
+    xarr = select_data_for_a_city(xarr=xarr, insee_code=insee_code)
+
+    return xarr
 
 
 if __name__ == "__main__":
-    # download_data(
-    #     start_date=date(2019, 10, 20),
-    #     end_date=date(2022, 10, 21)
-    # )
 
-    df = get_data_from_file(
-        filenames=[
-            # "downloader/data/QUOT_SIM2_2010-2019.csv.gz",
-            "downloader/data/QUOT_SIM2_2020-2024.csv.gz",
-        ]
+    xarr = launch_process(
+        insee_code=34172,
+        start_date=date(2020, 1, 1),
+        end_date=date(2020, 1, 2),
+        vars=["T_Q"],
     )
-    print(df.head())
-    print()
 
-    df = filter_dataframe(
-        df=df, vars=["T_Q"], start_date=date(2020, 1, 1), end_date=date(2020, 1, 2)
-    )
-    print(df.head())
-    print()
-
-    xarr = convert_df_to_netcdf(df=df)
-    print(xarr)
-    print()
-
-    xarr = select_data_for_a_city(xarr=xarr, city="montpellier")
     print(xarr)
