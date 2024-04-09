@@ -1,28 +1,38 @@
 import urllib
 import wget
 import xarray
+from os import path
 
 from datetime import date
 from utils import LOGGER, get_url, bar_progress
 
 
 def downloader_drias(scenario, parametre, modele):
-    """
-    Download drias data.
+    """_summary_
 
+    :param scenario: _description_
+    :param parametre: _description_
+    :param modele: _description_
+    :return: _description_
     """
-    try:
-        url = get_url(scenario, parametre, modele)
-        filename = (
-            "downloader/data/" + parametre + "_" + modele + "_" + scenario + ".nc"
+    url = get_url(scenario, parametre, modele)
+    filename = (
+        "downloader/data/" + parametre + "_" + modele + "_" + scenario + ".nc"
+    )
+    
+    if path.exists(filename):
+        LOGGER.info(f"Le fichier {filename} est déjà disponible localement.")
+
+    else:
+        LOGGER.info(f"Téléchargement du fichier {filename} en cours ...")
+        wget.download(
+            url=url,
+            out=filename,
+            bar=bar_progress,
         )
-        wget.download(url, out=filename, bar=bar_progress)
         print()
-        LOGGER.info("Données drias téléchargées.")
+        LOGGER.info(f"Téléchargement terminé !")
 
-    except urllib.error.URLError as err:
-        LOGGER.error(f"Erreur lors du téléchargement: {err}")
-        raise err
 
 
 def get_data_from_file(filename: str) -> xarray.core.dataset.Dataset:
@@ -77,6 +87,30 @@ def select_data_for_a_city(
         x=city_mapping[city]["x"], y=city_mapping[city]["y"]
     )
 
+def launch_process(insee_code: int, start_date: date, end_date: date, scenario:str, parametre:str, modele:str, vars: list[str]) -> xarray.core.dataset.Dataset:
+    """_summary_
+
+    :param insee_code: _description_
+    :param start_date: _description_
+    :param end_date: _description_
+    :param scenario: _description_
+    :param parametre: _description_
+    :param modele: _description_
+    :param vars: _description_
+    :return: _description_
+    """
+    # We collect required data
+    downloader_drias(scenario=scenario, parametre=parametre, modele=modele)
+
+    # We load data as Pandas DataFrame
+    filename = "downloader/data/" + parametre + "_" + modele + "_" + scenario + ".nc"
+    data = get_data_from_file(filename=filename)
+
+    # We processed the data
+    xarr = filter_xarr(xarr=data, vars=vars, start_date=start_date, end_date=end_date)
+    xarr = select_data_for_a_city(xarr=xarr, insee_code=insee_code)
+
+    return xarr
 
 if __name__ == "__main__":
     # downloader_drias(
