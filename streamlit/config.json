@@ -1,0 +1,14 @@
+{
+	"sources":[
+		{
+			"nom" : "Météo France - SIM",
+			"nom_out" : "SIM",
+			"variables" : ["LAMBX", "LAMBY", "DATE", "PRENEI_Q", "PRELIQ_Q", "T_Q", "FF_Q", "Q_Q","DLI_Q", "SSI_Q", "HU_Q", "EVAP_Q", "ETP_Q", "PE_Q", "SWI_Q", "DRAINC_Q", "RUNC_Q", "RESR_NEIGE_Q", "RESR_NEIGE6_Q", "HTEURNEIGE_Q","HTEURNEIGE6_Q", "HTEURNEIGEX_Q", "SNOW_FRAC_Q", "ECOULEMENT_Q","WG_RACINE_Q", "WGI_RACINE_Q", "TINF_H_Q", "TSUP_H_Q"]
+		},
+		{
+			"nom": "Drias",
+			"nom_out": "Drias",
+			"variables": ["tasAdjust","LambertParisII"]
+		}
+	]
+}
