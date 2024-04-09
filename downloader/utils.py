@@ -17,10 +17,10 @@ LOGGER = logging.getLogger(__name__)
 
 def convert_csv_to_netcdf(csv_path: str, metadata: dict) -> xarray:
     """
-    Convert a CSV file into a NetCDF file
-    :param csv_file_name: Path to CSV file to convert
-    :param metadata: Metadata to export to the NetCDF file
-    :return: xarray generated
+    Convertir un fichier CSV en un fichier NetCDF
+    :param csv_file_name: Chemin d'accès au fichier CSV à convertir
+    :param metadata: Métadonnées à exporter dans le fichier NetCDF
+    :return: Nouveau fichier NetCDF généré
     """
     df = pd.read_csv(csv_path)
 
@@ -35,9 +35,9 @@ def convert_csv_to_netcdf(csv_path: str, metadata: dict) -> xarray:
 
 def is_source_key_available(source_key: str) -> bool:
     """
-    Check if "source_key" is available in the file: downloader/conf/sim.json
-    :param source_key: Key corresponding to the desired data source
-    :return: Verification status (true or false)
+    Vérifier si "source_key" est disponible dans le fichier : downloader/conf/sim.json
+    :param source_key: Clé correspondant à la source de données souhaitée
+    :return: Statut de vérification (vrai ou faux)
     """
     if source_key is None:
         return False
@@ -50,9 +50,9 @@ def is_source_key_available(source_key: str) -> bool:
 
 def get_data_info(source_key: str) -> dict:
     """
-    Return elements within the config file.
-    :param source_key: Key corresponding to the desired data source
-    :return: Config element's value
+    Retourne les éléments du fichier de configuration.
+    :param source_key: Clé correspondant à la source de données souhaitée
+    :return: Valeur de l'élément dans le fichier de config
     """
     if source_key is not None:
         with open("downloader/conf/conf.json", "r") as file:
@@ -60,7 +60,14 @@ def get_data_info(source_key: str) -> dict:
            return content["sources"][source_key]
 
 
-def get_url(scenario, parametre, modele):
+def get_url(scenario: str, parametre: str, modele: str) -> str:
+    """
+    Renvoie le lien pour télécharger les données, selon les paramètres envoyés
+    :param scenario: Scénario choisi
+    :param parametre: Paramètres sélectionnés
+    :param modele: Modèle choisi
+    :return: Lien de téléchargement des données
+    """
     data = get_data_info("drias")
     if modele in data.keys() and parametre == data[modele]["parametre"]:
         if scenario == "historical":
@@ -87,12 +94,12 @@ def bar_progress(current, total, width=80):
     sys.stdout.flush()
 
 
-def netcdf_filter_columns(netcdf_file: xarray, column_list: list[str]) -> xarray:
+def netcdf_filter_columns(netcdf_file: str, column_list: list[str]) -> xarray:
     """
-    Return a NetCDF file with only the requested columns
-    :param netcdf_file: xarray to filter
-    :param column_list: list of the column to keep
-    :return: new xarray with only requested columns
+    Renvoie un fichier NetCDF comprenant uniquement les colonnes demandées
+    :param netcdf_file: Nom du fichier à traiter
+    :param column_list: Liste des colonnes à conserver
+    :return: Nouveau fichier NetCDF
     """
     data = xarray.open_dataset(netcdf_file)
     data_subset = data[column_list]
@@ -101,9 +108,17 @@ def netcdf_filter_columns(netcdf_file: xarray, column_list: list[str]) -> xarray
     return data_subset
 
 
-def city_mapping(source, dimensions):
-    xarray_city_mapper = xarray.open_dataset('downloader/data/city_mapping.nc')   
+def city_mapping(source: str, dimensions: list[str]) -> xarray:
+    """
+    Concatene un fichier source avec le fichier de mapping des villes, sur les dimensions choisies
+    :param source: Nom du fichier source
+    :param dimensions: Liste des dimensions sur lesquelles effectuer le filtre
+    :return: Fichier final concaténé
+    """
+    xarray_city_mapper = xarray.open_dataset('downloader/data/city_mapping.nc')
+    city_mapper_subset = xarray_city_mapper[['code_insee']]
     xarray_source = xarray.open_dataset(source)  
-    mapped_city = xarray.concat([xarray_source, xarray_city_mapper], dim = dimensions)
+
+    mapped_city = xarray.concat([xarray_source, city_mapper_subset], dim = dimensions)
 
     return mapped_city
