@@ -68,16 +68,13 @@ def select_data_for_a_city(
     :return: _description_
     """
     city_mapping = {
-        "montpellier": {"lon": 3.871099949, "lat": 43.63199234},
-        "paris": {"lon": 2.39095163, "lat": 48.82337189},
-        "bordeaux": {"lon": -0.545815527, "lat": 44.82810593},
+        "montpellier": {"x": 724000, "y": 1849000},
+        "paris": {"x": 604000, "y": 2425000},
+        "bordeaux": {"x": 372000, "y": 1985000},
     }
 
-    # xarr = xarr.set_index(lat="lat")
-    # xarr = xarr.set_index(lon="lon")
-
     return xarr.sel(
-        lon=city_mapping[city]["lon"], lat=city_mapping[city]["lat"]
+        x=city_mapping[city]["x"], y=city_mapping[city]["y"]
     )
 
 
