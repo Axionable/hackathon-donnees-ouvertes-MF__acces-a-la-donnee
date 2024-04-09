@@ -100,3 +100,10 @@ def netcdf_filter_columns(netcdf_file: xarray, column_list: list[str]) -> xarray
     
     return data_subset
 
+
+def city_mapping(source, dimensions):
+    xarray_city_mapper = xarray.open_dataset('downloader/data/city_mapping.nc')   
+    xarray_source = xarray.open_dataset(source)  
+    mapped_city = xarray.concat([xarray_source, xarray_city_mapper], dim = dimensions)
+
+    return mapped_city

@@ -164,7 +164,7 @@ def select_data_for_a_city(
     """
     city_mapping = {
         "montpellier": {"LAMBX": 7240, "LAMBY": 18490},
-        "paris": {"LAMBX": 6040, "LMABY": 24250},
+        "paris": {"LAMBX": 6040, "LAMBY": 24250},
         "bordeaux": {"LAMBX": 3720, "LAMBY": 19850},
     }
 
