@@ -1,4 +1,5 @@
 import json
+import numpy as np
 import pandas as pd
 import wget
 import xarray
@@ -183,10 +184,14 @@ def select_data_for_a_city(
         33063: {"LAMBX": 3720, "LAMBY": 19850},
     }
 
-    return xarr.sel(
+    xarr = xarr.sel(
         LAMBX=city_mapping[insee_code]["LAMBX"],
         LAMBY=city_mapping[insee_code]["LAMBY"],
     )
+
+    xarr = xarr.assign_coords(insee=("insee", np.array([insee_code])))
+
+    return xarr
 
 
 def launch_process(
@@ -224,3 +229,8 @@ if __name__ == "__main__":
     )
 
     print(xarr)
+
+    # xarr = city_mapping(xarr=xarr, dimensions=None)
+    # print()
+    # print()
+    # print(xarr)
