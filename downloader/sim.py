@@ -101,10 +101,10 @@ def download_data(start_date: date, end_date: date) -> None:
 
 
 def get_data_from_file(filenames: list[str]) -> pd.DataFrame:
-    """_summary_
+    """Fonction pour charger les données des fichiers csv.
 
-    :param filename: _description_
-    :return: _description_
+    :param filename: Liste des fichiers à charger
+    :return: Un Pandas DataFrame avec les données des fichiers
     """
     dict_mapping = {
         "data_mf_sim2_1958_1959": "downloader/data/QUOT_SIM2_1958-1959.csv.gz",
@@ -140,13 +140,13 @@ def get_data_from_file(filenames: list[str]) -> pd.DataFrame:
 def filter_dataframe(
     df: pd.DataFrame, vars: list[str], start_date: date, end_date: date
 ) -> pd.DataFrame:
-    """_summary_
+    """Fonction pour filtrer un Pandas DataFrame : filtrage de colonnes et par dates
 
-    :param df: _description_
-    :param vars: _description_
-    :param start_date: _description_
-    :param end_date: _description_
-    :return: _description_
+    :param df: Un Pandas DataFrame avec les données SIM
+    :param vars: Les colonnes à garder
+    :param start_date: La date minimale
+    :param end_date: La date maximale
+    :return: Un Pandas DataFrame filtré
     """
     # Variable filtering
     columns_to_keep = ["LAMBX", "LAMBY", "DATE"] + vars
@@ -160,10 +160,10 @@ def filter_dataframe(
 
 
 def convert_df_to_netcdf(df: pd.DataFrame) -> xarray.core.dataset.Dataset:
-    """_summary_
+    """Fonction pour convertir un Pandas DataFrame en xArray Dataset
 
-    :param df: _description_
-    :return: _description_
+    :param df: Le Pandas DataFrame à convertir
+    :return: Les données au format xArray
     """
     df = df.set_index(["DATE", "LAMBX", "LAMBY"])
     return df.to_xarray()
@@ -172,11 +172,11 @@ def convert_df_to_netcdf(df: pd.DataFrame) -> xarray.core.dataset.Dataset:
 def select_data_for_a_city(
     xarr: xarray.core.dataset.Dataset, insee_code: int
 ) -> xarray.core.dataset.Dataset:
-    """_summary_
+    """Fonction pour filtrer les données d'une ou plusieurs communes.
 
-    :param xarr: _description_
-    :param city: _description_
-    :return: _description_
+    :param xarr: Le dataset à filtrer
+    :param insee_code: Le code INSEE de la commune désirée
+    :return: Le dataset filtré
     """
     city_mapping = {
         34172: {"LAMBX": 7240, "LAMBY": 18490},
@@ -197,12 +197,12 @@ def select_data_for_a_city(
 def launch_process(
     insee_code: int, start_date: date, end_date: date, vars: list[str]
 ) -> xarray.core.dataset.Dataset:
-    """_summary_
+    """Fonction pour gérer l'ensemble du processus SIM.
 
-    :param insee_code: _description_
-    :param start_date: _description_
-    :param end_date: _description_
-    :return: _description_
+    :param insee_code: Le code INSEE de la commune désirée
+    :param start_date: La date minimale
+    :param end_date: La date maximale
+    :return: Le dateset final
     """
     # We collect required data
     download_data(start_date=start_date, end_date=end_date)
@@ -229,8 +229,3 @@ if __name__ == "__main__":
     )
 
     print(xarr)
-
-    # xarr = city_mapping(xarr=xarr, dimensions=None)
-    # print()
-    # print()
-    # print(xarr)
