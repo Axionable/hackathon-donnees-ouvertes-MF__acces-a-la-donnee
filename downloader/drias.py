@@ -1,4 +1,5 @@
 import urllib
+import numpy as np
 import wget
 import xarray
 from os import path
@@ -16,10 +17,8 @@ def downloader_drias(scenario, parametre, modele):
     :return: _description_
     """
     url = get_url(scenario, parametre, modele)
-    filename = (
-        "downloader/data/" + parametre + "_" + modele + "_" + scenario + ".nc"
-    )
-    
+    filename = "downloader/data/" + parametre + "_" + modele + "_" + scenario + ".nc"
+
     if path.exists(filename):
         LOGGER.info(f"Le fichier {filename} est déjà disponible localement.")
 
@@ -32,7 +31,6 @@ def downloader_drias(scenario, parametre, modele):
         )
         print()
         LOGGER.info(f"Téléchargement terminé !")
-
 
 
 def get_data_from_file(filename: str) -> xarray.core.dataset.Dataset:
@@ -61,15 +59,13 @@ def filter_xarr(
     xarr = xarr[vars]
 
     # Date filtering
-    xarr = xarr.sel(
-        time=slice(start_date, end_date)
-    )
+    xarr = xarr.sel(time=slice(start_date, end_date))
 
     return xarr
 
 
 def select_data_for_a_city(
-    xarr: xarray.core.dataset.Dataset, city: str
+    xarr: xarray.core.dataset.Dataset, insee_code: int
 ) -> xarray.core.dataset.Dataset:
     """_summary_
 
@@ -78,16 +74,27 @@ def select_data_for_a_city(
     :return: _description_
     """
     city_mapping = {
-        "montpellier": {"x": 724000, "y": 1849000},
-        "paris": {"x": 604000, "y": 2425000},
-        "bordeaux": {"x": 372000, "y": 1985000},
+        34172: {"x": 724000, "y": 1849000},
+        75056: {"x": 604000, "y": 2425000},
+        33063: {"x": 372000, "y": 1985000},
     }
 
-    return xarr.sel(
-        x=city_mapping[city]["x"], y=city_mapping[city]["y"]
-    )
+    xarr = xarr.sel(x=city_mapping[insee_code]["x"], y=city_mapping[insee_code]["y"])
 
-def launch_process(insee_code: int, start_date: date, end_date: date, scenario:str, parametre:str, modele:str, vars: list[str]) -> xarray.core.dataset.Dataset:
+    xarr = xarr.assign_coords(insee=("insee", np.array([insee_code])))
+
+    return xarr
+
+
+def launch_process(
+    insee_code: int,
+    start_date: date,
+    end_date: date,
+    scenario: str,
+    parametre: str,
+    modele: str,
+    vars: list[str],
+) -> xarray.core.dataset.Dataset:
     """_summary_
 
     :param insee_code: _description_
@@ -112,27 +119,17 @@ def launch_process(insee_code: int, start_date: date, end_date: date, scenario:s
 
     return xarr
 
+
 if __name__ == "__main__":
-    # downloader_drias(
-    #     scenario="historical",
-    #     parametre="temperature",
-    #     modele="CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63"
-    # )
 
-    xarr = get_data_from_file(
-        filename="downloader/data/temperature_CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63_historical.nc"
-    )
-    print(xarr)
-    print()
-
-    xarr = filter_xarr(
-        xarr=xarr,
+    xarr = launch_process(
+        insee_code=34172,
+        start_date=date(2020, 1, 1),
+        end_date=date(2020, 1, 31),
+        scenario="rcp45",
+        parametre="temperature",
+        modele="CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63",
         vars=["tasAdjust"],
-        start_date=date(2005, 1, 1),
-        end_date=date(2005, 1, 2),
     )
-    print(xarr)
-    print()
 
-    xarr = select_data_for_a_city(xarr=xarr, city="montpellier")
     print(xarr)
