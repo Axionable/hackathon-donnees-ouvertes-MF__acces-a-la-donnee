@@ -8,13 +8,14 @@ from datetime import date
 from utils import LOGGER, get_url, bar_progress
 
 
-def downloader_drias(scenario, parametre, modele):
-    """_summary_
+def downloader_drias(scenario: str, parametre: str, modele: str) -> None:
+    """
+    Télécharge les données drias.
 
-    :param scenario: _description_
-    :param parametre: _description_
-    :param modele: _description_
-    :return: _description_
+    :param scenario: Scenario climatique (Historical, rcp45, rcp85)
+    :param parametre: Paramètre du modèle.
+    :param modele: Modèle climatique.
+    :return: None
     """
     url = get_url(scenario, parametre, modele)
     filename = "downloader/data/" + parametre + "_" + modele + "_" + scenario + ".nc"
@@ -34,10 +35,11 @@ def downloader_drias(scenario, parametre, modele):
 
 
 def get_data_from_file(filename: str) -> xarray.core.dataset.Dataset:
-    """_summary_
+    """
+    Charge et renvoie le fichier téléchargé en local.
 
-    :param filename: _description_
-    :return: _description_
+    :param filename: Chemin du fichier à charger.
+    :return: Le dataset au format netcdf. 
     """
     xarr = xarray.open_dataset(filename)
     xarr.attrs = None
@@ -47,13 +49,14 @@ def get_data_from_file(filename: str) -> xarray.core.dataset.Dataset:
 def filter_xarr(
     xarr: xarray.core.dataset.Dataset, vars: list[str], start_date: date, end_date: date
 ) -> xarray.core.dataset.Dataset:
-    """_summary_
+    """
+    Fonction pour filtrer un xarray : par dates.
 
-    :param xarr: _description_
-    :param vars: _description_
-    :param start_date: _description_
-    :param end_date: _description_
-    :return: _description_
+    :param xarr: Données drias à filtrer.
+    :param vars: Les colonnes à garder
+    :param start_date: Date minimale.
+    :param end_date: Date maximale.
+    :return: Un xarray filtré 
     """
     # Variable filtering
     xarr = xarr[vars]
@@ -67,11 +70,12 @@ def filter_xarr(
 def select_data_for_a_city(
     xarr: xarray.core.dataset.Dataset, insee_code: int
 ) -> xarray.core.dataset.Dataset:
-    """_summary_
+    """
+    Fonction pour filtrer les données d'une ou plusieurs communes.
 
-    :param xarr: _description_
-    :param city: _description_
-    :return: _description_
+    :param xarr: Dataset à filtrer.
+    :param insee_code: Le code insee de la commune recherchée.
+    :return: Dataset filtré.
     """
     city_mapping = {
         34172: {"x": 724000, "y": 1849000},
@@ -95,16 +99,17 @@ def launch_process(
     modele: str,
     vars: list[str],
 ) -> xarray.core.dataset.Dataset:
-    """_summary_
+    """
+    Fonction pour gérer l'ensemble du processus Drias.
 
-    :param insee_code: _description_
-    :param start_date: _description_
-    :param end_date: _description_
-    :param scenario: _description_
-    :param parametre: _description_
-    :param modele: _description_
-    :param vars: _description_
-    :return: _description_
+    :param insee_code: Code insee de la commune recherchée.
+    :param start_date: Date minimale.
+    :param end_date: Date maximale.
+    :param scenario: Scénario climatique.
+    :param parametre: Paramètre du modèle.
+    :param modele: Modèle climatique.
+    :param vars: Colonnes à garder pour le filtrage.
+    :return: Le dataset final.
     """
     # We collect required data
     downloader_drias(scenario=scenario, parametre=parametre, modele=modele)
