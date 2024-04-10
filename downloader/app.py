@@ -1,8 +1,11 @@
-import xarray
-from sim import launch_process as launch_sim
-from drias import launch_process as launch_drias
 import datetime
+import xarray
+
 from flask import Flask, request, Response
+
+from drias import launch_process as launch_drias
+from sim import launch_process as launch_sim
+
 
 app = Flask(__name__)
 
@@ -25,48 +28,62 @@ def full_process():
             if data["nom"] == "Drias":
                 dl_drias = True
                 drias_xarr = launch_drias(
-                    insee_code=34172,
-                    start_date=datetime.date(2020, 1, 1),
-                    end_date=datetime.date(2020, 1, 31),
-                    scenario="rcp45",
-                    parametre="temperature",
-                    modele="CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63",
-                    vars=["tasAdjust"],
+                    insee_code=int(body["codeInsee"].split(" - ")[0]),
+                    start_date=datetime.datetime.strptime(
+                        body["startDate"], "%Y-%m-%d"
+                    ).date(),
+                    end_date=datetime.datetime.strptime(
+                        body["endDate"], "%Y-%m-%d"
+                    ).date(),
+                    scenario=body["DriasParams"]["scenario"],
+                    parametre=body["DriasParams"]["parametre"],
+                    modele=body["DriasParams"]["modele"],
+                    vars=data["selected"],
                 )
 
-            if data["nom"] == "SIM":
+            if data["nom"] == "Météo France - SIM":
                 dl_sim = True
                 sim_xarr = launch_sim(
-                    insee_code=34172,
-                    start_date=datetime.date(2020, 1, 1),
-                    end_date=datetime.date(2020, 1, 2),
-                    vars=["T_Q"],
+                    insee_code=int(body["codeInsee"].split(" - ")[0]),
+                    start_date=datetime.datetime.strptime(
+                        body["startDate"], "%Y-%m-%d"
+                    ).date(),
+                    end_date=datetime.datetime.strptime(
+                        body["endDate"], "%Y-%m-%d"
+                    ).date(),
+                    vars=data["selected"],
                 )
 
         if dl_drias and dl_sim:
             xarr = xarray.combine_by_coords([sim_xarr, drias_xarr])
-            print()
-            print()
-            print("------ FINAL DATASET: DRIAS & SIM MERGED ------")
-            print(xarr)
-            print()
-            print()
+            df = xarr.to_dataframe().reset_index()
+            df["DATE"] = df["DATE"].dt.strftime("%Y-%m-%d")
+            df = df.to_json(orient="records")
+            return Response(
+                df,
+                mimetype="application/json",
+            )
         elif dl_drias and not dl_sim:
-            pass
+            df = drias_xarr.to_dataframe().reset_index()
+            df["DATE"] = df["DATE"].dt.strftime("%Y-%m-%d")
+            df = df.to_json(orient="records")
+            return Response(
+                df,
+                mimetype="application/json",
+            )
         elif not dl_drias and dl_sim:
-            pass
-        
-        return Response(
-            f"OK",
-            status=200
-        )
-        
+            df = sim_xarr.to_dataframe().reset_index()
+            df["DATE"] = df["DATE"].dt.strftime("%Y-%m-%d")
+            df = df.to_json(orient="records")
+            return Response(
+                df,
+                mimetype="application/json",
+            )
     except (KeyError, AssertionError) as err:
         return Response(
-            f"Erreur : mauvais corps de requête. Détails: {err}",
-            status=400
+            f"Erreur : mauvais corps de requête. Détails: {err}", status=400
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

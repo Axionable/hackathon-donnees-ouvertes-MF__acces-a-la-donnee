@@ -39,7 +39,7 @@ def get_data_from_file(filename: str) -> xarray.core.dataset.Dataset:
     Charge et renvoie le fichier téléchargé en local.
 
     :param filename: Chemin du fichier à charger.
-    :return: Le dataset au format netcdf. 
+    :return: Le dataset au format netcdf.
     """
     xarr = xarray.open_dataset(filename)
     xarr.attrs = None
@@ -56,7 +56,7 @@ def filter_xarr(
     :param vars: Les colonnes à garder
     :param start_date: Date minimale.
     :param end_date: Date maximale.
-    :return: Un xarray filtré 
+    :return: Un xarray filtré
     """
     # Variable filtering
     xarr = xarr[vars]
@@ -85,7 +85,7 @@ def select_data_for_a_city(
 
     xarr = xarr.sel(x=city_mapping[insee_code]["x"], y=city_mapping[insee_code]["y"])
 
-    xarr = xarr.assign_coords(insee=("insee", np.array([insee_code])))
+    xarr = xarr.assign_coords(INSEE=("INSEE", np.array([insee_code])))
 
     return xarr
 
@@ -121,20 +121,8 @@ def launch_process(
     # We processed the data
     xarr = filter_xarr(xarr=data, vars=vars, start_date=start_date, end_date=end_date)
     xarr = select_data_for_a_city(xarr=xarr, insee_code=insee_code)
+    xarr = xarr.assign(tasAdjust_C=lambda x: x.tasAdjust - 273.15)
+    xarr = xarr.drop_vars(["x", "y", "lat", "lon"])
+    xarr = xarr.rename({"time": "DATE", "tasAdjust": "tasAdjust_K"})
 
     return xarr
-
-
-if __name__ == "__main__":
-
-    xarr = launch_process(
-        insee_code=34172,
-        start_date=date(2020, 1, 1),
-        end_date=date(2020, 1, 31),
-        scenario="rcp45",
-        parametre="temperature",
-        modele="CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63",
-        vars=["tasAdjust"],
-    )
-
-    print(xarr)

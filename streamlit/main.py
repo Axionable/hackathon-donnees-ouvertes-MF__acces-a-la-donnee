@@ -1,125 +1,135 @@
 import streamlit as st
 import requests
 import json
+from json import loads
 from datetime import datetime
+from PIL import Image
 
-import xarray as xr
-import numpy as np
 import pandas as pd
 
 
-np.random.seed(0)
-temperature = 15 + 8 * np.random.randn(2, 2, 3)
-lon = [[-99.83, -99.32], [-99.79, -99.23]]
-lat = [[42.25, 42.21], [42.63, 42.59]]
-time = pd.date_range("2014-09-06", periods=3)
-reference_time = pd.Timestamp("2014-09-05")
-
-
-da = xr.DataArray(
-    data=temperature,
-    dims=["x", "y", "time"],
-    coords=dict(
-        lon=(["x", "y"], lon),
-        lat=(["x", "y"], lat),
-        time=time,
-        reference_time=reference_time,
-    ),
-
-    attrs=dict(
-        description="Ambient temperature.",
-        units="degC",
-    ),
-)
-
-# da
-
-
 def telecharger(json):
-	r = requests.post('http://localhost:5000/', json=json)
-	return r.text
+    r = requests.post("http://localhost:5000/", json=json)
+    dic = loads(r.text)
+    print(dic)
+    return pd.DataFrame.from_dict(dic)
+
 
 def appli():
+    codeInseeList = ["34172 - Montpellier", "75056 - Paris", "33063 - Bordeaux"]
+    driasScenarioList = ["historical", "rcp45", "rcp85"]
+    response = None
 
-	codeInseeList = ["34172", "77280", "77001"]
+    startDate = datetime.date(datetime.now())
+    endDate = datetime.date(datetime.now())
 
-		#filtre Drias
-		# modele : "CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63"
-		# parametre : "temperature"
-	driasScenarioList = ["historical", "rcp45", "rcp85"]
-	isDriasUsed = False
+    with open("./config.json", "r") as f:
+        config = json.load(f)
 
-	startDate = datetime.date(datetime.now())
-	endDate =  datetime.date(datetime.now())
+    sourcesList = []
+    for source in config["sources"]:
+        sourcesList.append(source["nom"])
 
+    st.write("# Climate Accessibility")
 
-	f = open('./config.json','r')
-	config = json.load(f)
-	f.close()
+    f_col_0, f_col_1, _ = st.columns((5, 9, 7))
+    with f_col_0:
+        st.write("#### Conçu & Développé par")
+    with f_col_1:
+        st.image(Image.open("./images/logo-axionable.png"))
 
+    st.divider()
 
-	sourcesList=[]
-	for source in config["sources"] :
-		sourcesList.append(source["nom"])
+    with st.expander(":one:	**Récupération des données**"):
+        st.write("### Paramètres globaux")
 
+        f_col_0, f_col_1 = st.columns(2)
 
-	toolName = "Climate Downloader"
+        with f_col_0:
+            startDate = st.date_input("Date de début", startDate, format="DD/MM/YYYY")
+            codeInsee = st.selectbox("Commune", codeInseeList)
+        with f_col_1:
+            endDate = st.date_input(
+                "Date de fin",
+                endDate if startDate < endDate else startDate,
+                min_value=startDate,
+                format="DD/MM/YYYY",
+            )
 
+        st.write("### Paramètres spécifiques aux sources de données")
 
-	st.write("# "+toolName)
-	st.divider()
+        sources = st.multiselect(
+            "Sources", sourcesList, placeholder="Choisissez au moins une source"
+        )
 
+        tableVariableList = []
+        usedSources = []
 
-	st.write("# Filtres")
+        if sources:
+            for source in config["sources"]:
+                if source["nom"] in sources:
+                    usedSources.append(source["nom_out"])
+                    variableList = {
+                        "nom": source["nom_out"],
+                        "liste": [],
+                        "selected": [],
+                    }
+                    for variable in source["variables"]:
+                        variableList["liste"].append(variable)
+                    if source["nom"] == "Drias":
+                        f_col_0, f_col_1 = st.columns(2)
+                        with f_col_0:
+                            variableList["selected"] = st.multiselect(
+                                "Variables à collecter pour la source : "
+                                + source["nom_out"],
+                                variableList["liste"],
+                                placeholder="Choisissez vos variables",
+                            )
+                        with f_col_1:
+                            scenario = st.selectbox("Scénario Drias", driasScenarioList)
+                    else:
+                        variableList["selected"] = st.multiselect(
+                            "Variables à collecter pour la source : "
+                            + source["nom_out"],
+                            variableList["liste"],
+                            placeholder="Choisissez vos variables",
+                        )
+                    tableVariableList.append(variableList)
 
-	f_col_0, f_col_1 = st.columns(2)
+        apiJson = {
+            "codeInsee": codeInsee,
+            "startDate": startDate.strftime("%Y-%m-%d"),
+            "endDate": endDate.strftime("%Y-%m-%d"),
+            "filtreDonnees": tableVariableList,
+        }
 
-	with f_col_0:
-		codeInsee = st.selectbox("Commune", codeInseeList)
-	with f_col_1 :
-		startDate = st.date_input("Date de début", startDate, format="DD/MM/YYYY")
-		endDate = st.date_input("Date de fin", endDate if startDate < endDate else startDate , min_value=startDate, format="DD/MM/YYYY")
+        if "Drias" in usedSources:
+            apiJson["DriasParams"] = {
+                "modele": "CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63",
+                "parametre": "temperature",
+                "scenario": scenario,
+            }
 
-	st.write("# Collecte")
+        if len(tableVariableList) > 0:
+            clicked = st.button("Lancer la collecte !")
+            if clicked:
+                response = telecharger(apiJson)
 
-	sources = st.multiselect("Sources", sourcesList, placeholder="Choisissez au moins une source")
+    if response is not None:
+        with st.expander(":two: **Visualisation des résultats**"):
+            st.dataframe(response, hide_index=True)
 
-	tableVariableList = []
-	usedSources = []
+    st.divider()
 
-	if sources :
-
-		for source in config["sources"] :
-			if source["nom"] in sources :
-				usedSources.append(source["nom_out"])
-				variableList = { "nom":source["nom_out"], "liste":[], "selected":[] }
-				for variable in source["variables"] :
-					variableList["liste"].append(variable)
-				variableList["selected"] = st.multiselect( "Variables "+source["nom_out"], variableList["liste"], placeholder="Choisissez vos variables")
-				tableVariableList.append(variableList)
-
-	apiJson = { 
-		"codeInsee" : codeInsee,
-		"startDate" : startDate.strftime('%Y-%m-%d'),
-		"endDate" : endDate.strftime('%Y-%m-%d'),
-		"filtreDonnees" : tableVariableList,
-	}
-
-	if "Drias" in usedSources :
-		st.write("# Drias")
-		scenario = st.selectbox("Paramètre", driasScenarioList)
-		apiJson["DriasParams"] = { "modele" : "CNRM-CERFACS-CNRM-CM5_CNRM-ALADIN63", "parametre": "temperature", "scenario": scenario }
-
-	if len(tableVariableList) > 0 :
-			clicked = st.button("Collecter")
-			if clicked :
-				response = telecharger(apiJson)
-
-				response
-
+    st.write(
+        "Preuve de Concept d'une application web développée lors du **Hackathon données Ouvertes Météo-France** organisé par"
+    )
+    f_col_0, _, f_col_1 = st.columns((3, 0.5, 0.65))
+    with f_col_0:
+        st.image(Image.open("./images/logo-datagouv.png"))
+    with f_col_1:
+        st.image(Image.open("./images/logo-meteofrance.jpeg"))
 
 
 if __name__ == "__main__":
     appli()
-		
-

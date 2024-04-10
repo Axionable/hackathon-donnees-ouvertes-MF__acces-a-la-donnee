@@ -7,8 +7,9 @@ import xarray
 
 
 FORMAT = "%(asctime)-15s [%(filename)s:%(lineno)s - %(funcName)2s()] %(message)s"
-log_level = os.environ.get("LOG_LEVEL") if os.environ.get(
-    "LOG_LEVEL") is not None else "INFO"
+log_level = (
+    os.environ.get("LOG_LEVEL") if os.environ.get("LOG_LEVEL") is not None else "INFO"
+)
 logging.basicConfig(
     stream=sys.stdout, format=FORMAT, level=logging.getLevelName(log_level)
 )
@@ -24,11 +25,11 @@ def convert_csv_to_netcdf(csv_path: str, metadata: dict) -> xarray:
     """
     df = pd.read_csv(csv_path)
 
-    nom_nc = csv_path.rsplit( ".", 1 )[ 0 ]
+    nom_nc = csv_path.rsplit(".", 1)[0]
 
     xr = xarray.Dataset.from_dataframe(df)
     xr.attrs = metadata
-    xr.to_netcdf(f'{nom_nc}.nc')
+    xr.to_netcdf(f"{nom_nc}.nc")
 
     return xr
 
@@ -46,7 +47,7 @@ def is_source_key_available(source_key: str) -> bool:
         with open("downloader/conf/conf.json", "r") as file:
             content = json.load(file)
             return source_key in content["sources"].keys()
-        
+
 
 def get_data_info(source_key: str) -> dict:
     """
@@ -56,8 +57,8 @@ def get_data_info(source_key: str) -> dict:
     """
     if source_key is not None:
         with open("downloader/conf/conf.json", "r") as file:
-           content = json.load(file)
-           return content["sources"][source_key]
+            content = json.load(file)
+            return content["sources"][source_key]
 
 
 def get_url(scenario: str, parametre: str, modele: str) -> str:
@@ -81,7 +82,7 @@ def get_url(scenario: str, parametre: str, modele: str) -> str:
             return None
     else:
         print("Parametres invalides...")
-        return None         
+        return None
 
 
 def bar_progress(current, total, width=80):
@@ -103,8 +104,8 @@ def netcdf_filter_columns(netcdf_file: str, column_list: list[str]) -> xarray:
     """
     data = xarray.open_dataset(netcdf_file)
     data_subset = data[column_list]
-    data_subset.to_netcdf(f'{netcdf_file}_final.nc')
-    
+    data_subset.to_netcdf(f"{netcdf_file}_final.nc")
+
     return data_subset
 
 
@@ -115,10 +116,10 @@ def city_mapping(source: str, dimensions: list[str]) -> xarray:
     :param dimensions: Liste des dimensions sur lesquelles effectuer le filtre
     :return: Fichier final concaténé
     """
-    xarray_city_mapper = xarray.open_dataset('downloader/data/city_mapping.nc')
-    city_mapper_subset = xarray_city_mapper[['code_insee']]
-    xarray_source = xarray.open_dataset(source)  
+    xarray_city_mapper = xarray.open_dataset("downloader/data/city_mapping.nc")
+    city_mapper_subset = xarray_city_mapper[["code_insee"]]
+    xarray_source = xarray.open_dataset(source)
 
-    mapped_city = xarray.concat([xarray_source, city_mapper_subset], dim = dimensions)
+    mapped_city = xarray.concat([xarray_source, city_mapper_subset], dim=dimensions)
 
     return mapped_city

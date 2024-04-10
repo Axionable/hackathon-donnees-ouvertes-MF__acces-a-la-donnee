@@ -153,8 +153,12 @@ def filter_dataframe(
     df = df[columns_to_keep].copy()
 
     # Date filtering
-    df["DATE"] = pd.to_datetime(df["DATE"], format="%Y%m%d").dt.date
-    df = df.loc[(df["DATE"] >= start_date) & (df["DATE"] <= end_date)]
+    df["DATE"] = pd.to_datetime(df["DATE"], format="%Y%m%d")
+    df = df.loc[
+        (df["DATE"] >= np.datetime64(start_date))
+        & (df["DATE"] <= np.datetime64(end_date))
+    ]
+    print(df.dtypes)
 
     return df
 
@@ -189,7 +193,7 @@ def select_data_for_a_city(
         LAMBY=city_mapping[insee_code]["LAMBY"],
     )
 
-    xarr = xarr.assign_coords(insee=("insee", np.array([insee_code])))
+    xarr = xarr.assign_coords(INSEE=("INSEE", np.array([insee_code])))
 
     return xarr
 
@@ -215,17 +219,6 @@ def launch_process(
     df = filter_dataframe(df=df, vars=vars, start_date=start_date, end_date=end_date)
     xarr = convert_df_to_netcdf(df=df)
     xarr = select_data_for_a_city(xarr=xarr, insee_code=insee_code)
+    xarr = xarr.drop_vars(["LAMBX", "LAMBY"])
 
     return xarr
-
-
-if __name__ == "__main__":
-
-    xarr = launch_process(
-        insee_code=34172,
-        start_date=date(2020, 1, 1),
-        end_date=date(2020, 1, 2),
-        vars=["T_Q"],
-    )
-
-    print(xarr)

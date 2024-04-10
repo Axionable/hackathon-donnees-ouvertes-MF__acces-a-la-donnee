@@ -23,7 +23,7 @@ def osm_downloader():
             zip_file_path = os.path.join(temp_dir, zip_file_name)
             wget.download(url, out=zip_file_path)
 
-            with zipfile.ZipFile(zip_file_path, 'r') as zip_handler:
+            with zipfile.ZipFile(zip_file_path, "r") as zip_handler:
                 file_name = get_data_info(source_key="insee")["shp_file_name"]
                 file_path = os.path.join(temp_dir, "communes-shp", file_name)
                 zip_handler.extractall(os.path.join(temp_dir, "communes-shp"))
