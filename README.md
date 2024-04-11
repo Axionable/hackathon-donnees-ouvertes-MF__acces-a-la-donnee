@@ -1,5 +1,5 @@
 # Climate Accessibility
-> Réutilisation créée pour le Hachkathon Données Ouvertes Météo-France.
+> Réutilisation créée pour le Hackathon Données Ouvertes Météo-France.
 
 ### Problématique et proposition de valeur
 Comment faciliter le quotidien des experts métiers en réduisant leurs efforts sur la collecte (différents fournisseurs de données et modèles climatiques) et la transformation de données climatiques (format hétérogènes) pour qu'ils puissent se concentrer sur des tâches à plus forte valeur ajoutée ?
